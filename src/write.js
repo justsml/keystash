@@ -1,13 +1,12 @@
 const Promise = require('bluebird')
 const assert = require('@smallwins/validate/assert')
-const waterfall = require('run-waterfall')
 const crypto = require('crypto')
 const aws = require('aws-sdk')
 const encrypt = require('./_encrypt')
 const writeS3 = require('./_write-s3')
 const read = require('./read')
 const _write = require('./_write')
-const lock = require('./_lock')
+const lock = Promise.promisifyAll(require('./_lock'))
 
 /**
  * write a key/value to a ns
@@ -19,8 +18,9 @@ module.exports = function write({ns, key, value, version}) {
     key: String,
     value: Any,
   })
-  lock.writeLock(function _writeLock() {
-    read({ns, key, version, value})
+  // ??????? no idea, usually have to try a few things console.log some stuff!!!
+  return lock.writeLockAsync(function _writeLock() {
+    return read({ns, key, version, value})
     .then(payload => {
       payload[key] = value
       return _write({ns, payload})
