@@ -1,34 +1,26 @@
-var aws = require('aws-sdk')
-var waterfall = require('run-waterfall')
+const Promise = require('bluebird')
+const aws = require('aws-sdk')
 
 /**
  * creates a kms master key alias/arc
  */
-module.exports = function _createKey(callback) {
-  var kms = new aws.KMS
-  kms.listAliases({}, function _aliases(err, results) {
-    if (err) throw err
-    var hasArc = !!results.Aliases.find(a=> a.AliasName === 'alias/arc')
+module.exports = function _createKey() {
+  const kms = Promise.promisifyAll(new aws.KMS())
+  return kms.listAliasesAsync({})
+  .filter(a => a.AliasName === 'alias/arc')
+  .then(hasArc => {
     if (hasArc) {
-      callback()
+      return
     }
-    else {
-      waterfall([
-        function _createKey(callback) {
-          kms.createKey({
-            Tags: [{
-              TagKey: 'CreatedBy', 
-              TagValue: 'JSF Architect'
-            }]
-          }, callback)
-        },
-        function _addAlias(key, callback) {
-          kms.createAlias({
-            AliasName: 'alias/arc',
-            TargetKeyId: key.KeyMetadata.KeyId,
-          }, callback)      
-        }
-      ], callback)
-    }
+    return kms.createKeyAsync({
+      Tags: [{
+        TagKey: 'CreatedBy',
+        TagValue: 'JSF Architect'
+      }]
+    })
+    .then(key => kms.createAliasAsync({
+      AliasName: 'alias/arc',
+      TargetKeyId: key.KeyMetadata.KeyId,
+    }))
   })
 }

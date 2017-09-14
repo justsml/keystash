@@ -1,27 +1,23 @@
-var assert = require('@smallwins/validate/assert')
-var aws = require('aws-sdk')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const aws = require('aws-sdk')
 
 /**
  * list all versions for given ns
  */
-module.exports = function versions(params, callback) {
-  assert(params, {
+module.exports = function versions({ns, version}) {
+  assert({ns}, {
     ns: String,
-  //version: String <-- optional
+    //version: String <-- optional
   })
-  var s3 = new aws.S3
-  s3.listObjectVersions({
-    Bucket: params.ns, 
+  const s3 = Promise.promisifyAll(new aws.S3())
+  return s3.listObjectVersionsAsync({
+    Bucket: params.ns,
     Prefix: 'archive',
-  },
-  function _versions(err, result) {
-    if (err) {
-      callback(err)
-    }
-    else {
-      var ver = v=> ({version: v.VersionId, modified: v.LastModified})
-      callback(null, result.Versions.map(ver))
-    }
+  })
+  .then(({Versions}) => {
+    const ver = v => ({version: v.VersionId, modified: v.LastModified})
+    return Versions.map(ver)
   })
 }
 

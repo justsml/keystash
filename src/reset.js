@@ -1,16 +1,14 @@
-var assert = require('@smallwins/validate/assert')
-var write = require('./_write')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const write = require('./_write')
 
 /**
  * reset a ns
  */
-module.exports = function _reset(params, callback) {
-  assert(params, {
+module.exports = function _reset({ns}) {
+  assert({ns}, {
     ns: String,
   })
-  write({
-    ns: params.ns,
-    payload: {},
-  }, callback)
+  return write({ns, payload: {}})
 }
 

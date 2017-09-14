@@ -1,40 +1,37 @@
-var assert = require('@smallwins/validate/assert')
-var waterfall = require('run-waterfall')
-var crypto = require('crypto')
-var aws = require('aws-sdk')
-var encrypt = require('./_encrypt')
-var writeS3 = require('./_write-s3')
-var read = require('./read')
-var _write = require('./_write')
-var lock = require('./_lock')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const crypto = require('crypto')
+const aws = require('aws-sdk')
+const encrypt = require('./_encrypt')
+const writeS3 = require('./_write-s3')
+const read = require('./read')
+const _write = require('./_write')
+const lock = Promise.promisifyAll(require('./_lock'))
 
 /**
  * write a key/value to a ns
  */
-module.exports = function write(params, callback) {
-  var Any = v=> true
-  assert(params, {
+module.exports = function write({ns, key, value, version}) {
+  const Any = v => true
+  assert({ns, key, value}, {
     ns: String,
     key: String,
     value: Any,
   })
-  lock.writeLock(function _writeLock() {
-    waterfall([
-      function(callback) {
-        read(params, callback)
-      },
-      function(result, callback) {
-        result[params.key] = params.value
-        _write({
-          ns: params.ns,
-          payload: result,
-        }, callback)
-      },
-    ],
-    function _done(err, result) {
+  // ??????? no idea, usually have to try a few things console.log some stuff!!!
+  return lock.writeLockAsync(function _writeLock() {
+    return read({ns, key, version, value})
+    .then(payload => {
+      payload[key] = value
+      return _write({ns, payload})
+    })
+    .then(payload => {
       lock.unlock()
-      if (err) callback(err)
-      else callback(null, result)
+      return payload
+    })
+    .catch(err => {
+      lock.unlock()
+      return Promise.reject(err)
     })
   })
 }

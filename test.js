@@ -1,6 +1,6 @@
-var test = require('tape')
-var env = require('.')
-var ns = 'foo-test-creds-ns'
+const test = require('tape')
+const env = require('.')
+const ns = 'foo-test-creds-ns'
 
 test('env', t=> {
   t.plan(8)
@@ -22,7 +22,7 @@ test('env.create', t=> {
   function _create(err, result) {
     if (err) {
       t.fail(err)
-    } 
+    }
     else {
       t.ok(result, 'got result')
       console.log(result)
@@ -33,12 +33,12 @@ test('env.create', t=> {
 test('env.read', t=> {
   t.plan(1)
   env.read({
-    ns 
+    ns
   },
   function _read(err, result) {
     if (err) {
       t.fail(err)
-    } 
+    }
     else {
       t.ok(result, 'got result')
       console.log(result)
@@ -56,7 +56,7 @@ test('env.write', t=> {
   function _write(err, result) {
     if (err) {
       t.fail(err)
-    } 
+    }
     else {
       t.ok(result, 'got result')
       console.log(result)
@@ -67,7 +67,7 @@ test('env.write', t=> {
 test('env.write async safe', t=> {
   t.plan(6)
   var config = {
-    PRIVATE_API: 'https://private.example.com', 
+    PRIVATE_API: 'https://private.example.com',
     PUBLIC_API: 'https://api.example.com',
     SLACK_ENDPOINT: 'https://slack.example.com',
     FOO: true,
@@ -91,7 +91,7 @@ test('env.write async safe', t=> {
         function _read(err, result) {
           if (err) {
             t.fail(err)
-          } 
+          }
           else {
             t.ok(result, 'got result')
             console.log(result)
@@ -112,7 +112,7 @@ test('env.delete', t=> {
   function _read(err, result) {
     if (err) {
       t.fail(err)
-    } 
+    }
     else {
       t.ok(result, 'got result')
       console.log(result)
@@ -129,7 +129,7 @@ test('env.versions', t=> {
   function _read(err, result) {
     if (err) {
       t.fail(err)
-    } 
+    }
     else {
       t.ok(result, 'got result')
       console.log(result.length)

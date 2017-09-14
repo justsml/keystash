@@ -1,33 +1,28 @@
 #!/usr/bin/env node
-var chalk = require('chalk')
-var prereq = []
-
-if (!process.env.AWS_PROFILE) {
-  prereq.push('AWS_PROFILE')
-}
-
-if (!process.env.AWS_REGION) {
-  prereq.push('AWS_REGION')
-}
-
-var fail = prereq.length != 0
-if (fail) {
+const chalk = require('chalk')
+const prereqFail = p => {
   console.log(chalk.red('Error!') + ' ' + chalk.yellow('Missing env variables:'))
-  prereq.forEach(p=> {
-    console.log(chalk.dim(' - ') + chalk.cyan(p))  
-  })
+  console.log(chalk.dim(' - ') + chalk.cyan(p))
   process.exit(1)
 }
 
+if (!process.env.AWS_PROFILE) {
+  prereqFail('AWS_PROFILE')
+}
+
+if (!process.env.AWS_REGION) {
+  prereqFail('AWS_REGION')
+}
+
 // prereq check passed; grab deps
-var pad = require('lodash.padstart')
-var strftime = require('strftime')
-var end = require('lodash.padend')
-var secrets = require('.')
-var yargs = require('yargs')
+const pad = require('lodash.padstart')
+const strftime = require('strftime')
+const end = require('lodash.padend')
+const secrets = require('.')
+const yargs = require('yargs')
 
 // setup the cli args
-var argv = require('yargs')
+const argv = require('yargs')
   .usage('Usage: $0 <bucket> [option]')
   .example('$0', 'List all secrets')
   .example('$0 bukkit keyname keyvalue', 'Save a secret')
@@ -54,56 +49,56 @@ var argv = require('yargs')
 
 // helper to check for undefined
 // @returns {Boolean}
-var undef = val=> typeof val === 'undefined'
+const undef = val=> typeof val === 'undefined'
 
 // if no args given
-var blank = argv._.length === 0 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
-  undef(argv.reset) && 
-  undef(argv.versions) && 
+const blank = argv._.length === 0 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
+  undef(argv.reset) &&
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // read secrets from s3 bucket
-var listSecrets = (argv._.length === 1 || argv._.length === 2) &&
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
+const listSecrets = (argv._.length === 1 || argv._.length === 2) &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
   undef(argv.rand) &&
-  undef(argv.reset) && 
-  undef(argv.versions) && 
+  undef(argv.reset) &&
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // create a bucket for secrets
-var createBucket = argv._.length === 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  argv.create && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
-  undef(argv.reset) && 
-  undef(argv.versions) && 
+const createBucket = argv._.length === 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  argv.create &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
+  undef(argv.reset) &&
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // add a secret
-var putKey = argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  argv.put && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
-  undef(argv.reset) && 
+const putKey = argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  argv.put &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
+  undef(argv.reset) &&
   undef(argv.rand) &&
-  undef(argv.versions) && 
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // support for syntax:
@@ -115,164 +110,160 @@ if (argv._.length === 3 && undef(argv.put)) {
 }
 
 // generate a key
-var isRand = !!(argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
+const isRand = !!(argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
   argv.rand)
 
 // get a secret
-var getKey = argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  argv.get && 
-  undef(argv.delete) && 
-  undef(argv.reset) && 
+const getKey = argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  argv.get &&
+  undef(argv.delete) &&
+  undef(argv.reset) &&
   undef(argv.rand) &&
-  undef(argv.versions) && 
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // remove a secret
-var delKey = argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  argv.delete && 
+const delKey = argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  argv.delete &&
   undef(argv.rand) &&
-  undef(argv.reset) && 
-  undef(argv.versions) && 
+  undef(argv.reset) &&
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // reset all secrets in the latest version
-var reset = argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
-  argv.reset && 
-  undef(argv.versions) && 
+const reset = argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
+  argv.reset &&
+  undef(argv.versions) &&
   undef(argv.nuke)
 
 // get all versions
-var versions = argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
-  undef(argv.reset) && 
+const versions = argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
+  undef(argv.reset) &&
   undef(argv.rand) &&
-  argv.versions && 
+  argv.versions &&
   undef(argv.nuke)
 
 // remove all versions
-var nuke = argv._.length >= 1 && 
-  argv.h === false && 
-  argv.help === false && 
-  undef(argv.create) && 
-  undef(argv.put) && 
-  undef(argv.get) && 
-  undef(argv.delete) && 
-  undef(argv.reset) && 
-  undef(argv.versions) && 
+const nuke = argv._.length >= 1 &&
+  argv.h === false &&
+  argv.help === false &&
+  undef(argv.create) &&
+  undef(argv.put) &&
+  undef(argv.get) &&
+  undef(argv.delete) &&
+  undef(argv.reset) &&
+  undef(argv.versions) &&
   argv.nuke
 
-// command not found 
-var notFound = !nuke && 
-    !versions && 
-    !reset && 
-    !delKey && 
-    !putKey && 
-    !getKey && 
-    !createBucket && 
+// command not found
+const notFound = !nuke &&
+    !versions &&
+    !reset &&
+    !delKey &&
+    !putKey &&
+    !getKey &&
+    !createBucket &&
     !listSecrets &&
     !isRand &&
     !blank
 
+function logError(err) {
+  const error = chalk.red('Error!')
+  const msg = chalk.yellow(err.message)
+  console.error(error, msg)
+  process.exit(1)
+}
+
+function logMessage(msg) {
+  msg = chalk.magenta(msg)
+  console.log(msg)
+  process.exit(1)
+}
+
 function list(ns, title, result) {
   console.log('')
-  var head = chalk.dim(ns)
-  var title = chalk.dim.cyan(title)
+  const head = chalk.dim(ns)
+  const title = chalk.dim.cyan(title)
   console.log(' ' + head + ' ' + title)
   console.log(chalk.dim('────────────────────────────────────────────────────────────'))
   if (result) {
-    var out = ''
-    Object.keys(result).forEach(key=> {
-      var keyname = pad(chalk.dim(key), 35)
-      var value = end(chalk.cyan(result[key]), 35)
+    const output = Object.keys(result)
+    .reduce((out, key) => {
+      const keyname = pad(chalk.dim(key), 35)
+      const value = end(chalk.cyan(result[key]), 35)
       out += `${keyname} ${value}\n`
-    })
-    console.log(out)
+      return out
+    }, '')
+    console.log(output)
   }
   process.exit()
 }
 
 if (blank) {
-  var err = chalk.red('Error!')
-  var msg = chalk.yellow(' Missing S3 bucket argument.')
+  const err = chalk.red('Error!')
+  const msg = chalk.yellow(' Missing S3 bucket argument.')
   console.log(err + msg)
   process.exit(1)
 }
 
 if (listSecrets) {
-  var ns = argv._[0]
-  var key = argv._[1]
+  const ns = argv._[0]
+  const key = argv._[1]
   secrets.read({
     ns
-  }, 
-  function _read(err, result) {
-    if (err && err.name === 'NoSuchBucket') {
-      var err = chalk.red('Error!')
-      var msg = chalk.yellow(' S3 bucket not found.')
-      console.log(err + msg)
-      process.exit(1) 
-    }
-    else if (err) {
-      var error = chalk.red('Error!')
-      var msg = chalk.yellow(err.message)
-      console.log(error + msg)
-      process.exit(1)
-    }
-    else if (key) {
-      console.log(result[key])
-    }  
-    else {
-      list(ns, 'secrets key', result)
-    }
   })
+  .catch({name: 'NoSuchBucket'}, logMessage.bind(null, 'bucket not found'))
+  .then(result => {
+    if (key) {
+      console.log(result[key])
+      return result[key]
+    }
+    return list(ns, 'secrets key', result)
+  })
+  .catch(logError)
 }
 
 if (createBucket) {
-  var ns = argv._[0]
+  const ns = argv._[0]
   secrets.create({
     ns
-  },
-  function _create(err, result) {
-    if (err) {
-      var error = chalk.red('Error!')
-      var msg = chalk.yellow(err.message)
-      console.log(error + msg)
-      process.exit(1)
-    } 
-    else {
-      var rex = chalk.green('Created')
-      var msg = chalk.cyan(` ${ns}`)
-      console.log(rex + msg)
-      process.exit()
-    }
+  })
+  .catch(logError)
+  .then(result => {
+    const rex = chalk.green('Created')
+    const msg = chalk.cyan(` ${ns}`)
+    console.log(rex + msg)
+    process.exit()
   })
 }
 
 if (putKey) {
-  var ns = argv._[0]
-  var key = argv.put
-  var value = argv._[1]
+  const ns = argv._[0]
+  const key = argv.put
+  const value = argv._[1]
   if (!key || !value) {
     console.log('missing key and/or value')
     process.exit(1)
@@ -281,185 +272,116 @@ if (putKey) {
     ns,
     key,
     value,
-  },
-  function _read(err, result) {
-    if (err) {
-      console.log(err)
-      process.exit(1)
-    } 
-    else {
-      list(ns, 'put', result) 
-    }
   })
+  .then(result => list(ns, 'put', result))
+  .catch(logError)
 }
 
 if (isRand) {
-  var ns = argv._[0]
-  var key = argv.rand
+  const ns = argv._[0]
+  const key = argv.rand
   if (!key) {
     console.log('missing key')
     process.exit(1)
   }
-  secrets.rand({
-    ns,
-    key,
-  },
-  function _read(err, result) {
-    if (err) {
-      console.log(err)
-      process.exit(1)
-    } 
-    else {
-      list(ns, 'rand', result) 
-    }
-  })
+  secrets.rand({ns, key})
+  .then(result => list(ns, 'rand', result))
 }
 
 if (getKey) {
-  var key = argv.get
+  const key = argv.get
   secrets.read({
     ns: argv._[0]
-  }, 
-  function _read(err, result) {
-    if (err && err.name === 'NoSuchBucket') {
-      console.log('bucket not found')
-      process.exit(1) 
-    }
-    else if (err) {
-      console.log(err)
-      process.exit(1)
-    }
-    else {
-      console.log(result[key])
-      process.exit()
-    }  
+  })
+  .catch({name: 'NoSuchBucket'}, logMessage.bind(null, 'bucket not found'))
+  .catch(logError)
+  .then(result => {
+    console.log(result[key])
+    process.exit()
   })
 }
 
 if (delKey) {
-  var ns = argv._[0]
-  var key = argv.delete
+  const ns = argv._[0]
+  const key = argv.delete
   secrets.delete({
     ns,
     key,
-  },
-  function _read(err, result) {
-    if (err) {
-      console.log(err)
-      process.exit(1) 
-    } 
-    else {
-      list(ns, 'deleted', result) 
-    }
   })
+  .then(result => list(ns, 'deleted', result))
+  .catch({name: 'NoSuchBucket'}, logMessage.bind(null, 'bucket not found'))
+  .catch(logError)
 }
 
 if (reset) {
-  var ns = argv._[0]
+  const ns = argv._[0]
   secrets.reset({
     ns,
-  },
-  function _reset(err, result) {
-    if (err) {
-      console.log(err)
-      process.exit(1) 
-    } 
-    else {
-      list(ns, 'reset', result) 
-    }
   })
+  .then(result => list(ns, 'reset', result))
+  .catch({name: 'NoSuchBucket'}, logMessage.bind(null, 'bucket not found'))
+  .catch(logError)
 }
-  
+
 if (versions) {
-  var ns = argv._[0]
-  var key = argv._[1]
-  var version = typeof argv.versions === 'boolean'? false : argv.versions
+  const ns = argv._[0]
+  const key = argv._[1]
+  const version = typeof argv.versions === 'boolean'? false : argv.versions
   if (version && !key) {
     // display one version
     secrets.read({
       ns,
       version,
-    }, 
-    function _read(err, result) {
-      if (err && err.name === 'NoSuchBucket') {
-        console.log('bucket not found')
-        process.exit(1) 
-      }
-      else if (err) {
-        console.log(err)
-        process.exit(1)
-      }
-      else {
-        list(ns, version, result) 
-        process.exit()
-      }  
     })
-  }
-  else if (version && key) {
+    .then(result => {
+      list(ns, version, result)
+      process.exit()
+    })
+  } else if (version && key) {
     // display one key of a version
     secrets.read({
       ns,
       version,
-    }, 
-    function _read(err, result) {
-      if (err && err.name === 'NoSuchBucket') {
-        console.log('bucket not found')
-        process.exit(1) 
-      }
-      else if (err) {
-        console.log(err)
-        process.exit(1)
-      }
-      else {
-        console.log(result[key]) 
-        process.exit()
-      }  
     })
-  }
-  else {
+    .then(result => {
+      console.log(result[key])
+      process.exit()
+    })
+    .catch({name: 'NoSuchBucket'}, logMessage.bind(null, 'bucket not found'))
+    .catch(logError)
+
+  } else {
     // display all versions
-    secrets.versions({
-      ns,
-    },
-    function _versions(err, result) {
-      if (err) {
-        console.log(err)
-        process.exit(1) 
-      } 
-      else {
-        function remap(v) {
-          var obj = {}
-          var d = strftime('%B %d, %Y %l:%M:%S', v.modified)
-          obj[d] = v.version
-          return obj
-        }
-        var versions = result.map(remap).reduce((a,b)=> Object.assign({}, a, b))
-        list(ns, 'versions', versions) 
+    secrets.versions({ns})
+    .then(result => {
+      function remap(v) {
+        const obj = {}
+        const d = strftime('%B %d, %Y %l:%M:%S', v.modified)
+        obj[d] = v.version
+        return obj
       }
+      const versions = result.map(remap).reduce((a,b)=> Object.assign({}, a, b))
+      list(ns, 'versions', versions)
     })
+    .catch(err => logMessage(err.message))
   }
 }
 
 if (nuke) {
-  var ns = argv._[0]
+  const ns = argv._[0]
   secrets.nuke({
     ns,
-  },
-  function _nuke(err, result) {
-    if (err) {
-      console.log(err)
-      process.exit(1) 
-    } 
-    else {
-      list(ns, 'nuked', versions) 
-      process.exit()
-    }
   })
+  .then(result => {
+    list(ns, 'nuked', versions)
+    process.exit()
+  })
+  .catch(err => logMessage(err.message))
 }
 
 if (notFound) {
-  var err = chalk.red('Error!')
-  var msg = chalk.cyan(` Command not found.`)
+  const err = chalk.red('Error!')
+  const msg = chalk.cyan(` Command not found.`)
   console.log(err + msg)
   process.exit(1)
 }

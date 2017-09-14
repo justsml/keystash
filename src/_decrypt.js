@@ -1,26 +1,22 @@
-var assert = require('@smallwins/validate/assert')
-var crypto = require('crypto')
-var aws = require('aws-sdk')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const crypto = require('crypto')
+const aws = require('aws-sdk')
 
-module.exports = function _decrypt(params, callback) {
-  assert(params, {
+module.exports = function _decrypt({encrypted, cipher}) {
+  assert({encrypted, cipher}, {
     encrypted: String,
     cipher: Buffer,
   })
 
-  var {encrypted, cipher} = params
-
-  var kms = new aws.KMS
-  kms.decrypt({
+  const kms = Promise.promisifyAll(new aws.KMS())
+  return kms.decryptAsync({
     CiphertextBlob: cipher
-  },
-  function _decrypt(err, result) {
-    if (err) throw err
-
-    var key = result.Plaintext.toString()
-    var decipher = crypto.createDecipher('aes-256-ctr', key)
-    var result = decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8')
-
-    callback(null, JSON.parse(result)) 
+  })
+  .then(result => {
+    const key = result.Plaintext.toString()
+    const decipher = crypto.createDecipher('aes-256-ctr', key)
+    const result = decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8')
+    return JSON.parse(result)
   })
 }
