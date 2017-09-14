@@ -1,40 +1,35 @@
-var assert = require('@smallwins/validate/assert')
-var aws = require('aws-sdk')
-var waterfall = require('run-waterfall')
-var create = require('./create')
-var write = require('./write')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const aws = require('aws-sdk')
+const create = require('./create')
+const write = require('./write')
 
 /**
  * reset a ns
  */
-module.exports = function _nuke(params, callback) {
-  assert(params, {
-    ns: String,
+module.exports = function _nuke({ns}) {
+  assert({ns}, {ns: String})
+
+  const s3 = Promise.promisifyAll(new aws.S3())
+  return s3.listObjectVersionsAsync({
+    Bucket: ns,
+    Prefix: 'archive',
   })
-  var s3 = new aws.S3
-  waterfall([
-    function(callback) {
-      s3.listObjectVersions({
-        Bucket: params.ns, 
-        Prefix: 'archive',
-      }, callback)
-    },
-    function(result, callback) {
-      // loop thru versions deleting
-      function remap(v) {
-        var obj = {
-          Key: 'archive'
-        }
-        obj.VersionId = v.VersionId
-        return obj
+  .then(result => {
+    // loop thru versions deleting
+    function remap(v) {
+      const obj = {
+        Key: 'archive'
       }
-      s3.deleteObjects({
-        Bucket: params.ns,
-        Delete: {
-          Objects: result.Versions.map(remap)
-        },
-      }, callback)
+      obj.VersionId = v.VersionId
+      return obj
     }
-  ], callback)
+    return s3.deleteObjectsAsync({
+      Bucket: ns,
+      Delete: {
+        Objects: result.Versions.map(remap)
+      }
+    })
+  })
 }
 

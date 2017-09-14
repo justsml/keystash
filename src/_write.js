@@ -1,33 +1,21 @@
-var assert = require('@smallwins/validate/assert')
-var waterfall = require('run-waterfall')
-var crypto = require('crypto')
-var aws = require('aws-sdk')
-var encrypt = require('./_encrypt')
-var write = require('./_write-s3')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const crypto = require('crypto')
+const aws = require('aws-sdk')
+const encrypt = require('./_encrypt')
+const write = require('./_write-s3')
 
-module.exports = function _write(params, callback) {
-  assert(params, {
+module.exports = function _write({payload, ns}) {
+  assert({payload, ns}, {
     payload: Object,
     ns: String,
   })
-  waterfall([
-    function e(callback) {
-      encrypt(params, callback)
-    },
-    function w(result, callback) {
-      write({
-        ns: params.ns, 
-        payload: result.encrypted,
-        cipher: result.cipher,
-      }, callback) 
-    }
-  ], 
-  function _done(err) {
-    if (err) {
-      callback(err)
-    }
-    else {
-      callback(null, params.payload)
-    }
+  return encrypt({payload})
+  .then(result => {
+    return write({
+      ns: ns,
+      payload: result.encrypted,
+      cipher: result.cipher,
+    })
   })
 }

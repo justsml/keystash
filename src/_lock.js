@@ -1,3 +1,3 @@
-var locks = require('locks')
+const locks = require('locks')
 // create a singleton lock
 module.exports = locks.createReadWriteLock()

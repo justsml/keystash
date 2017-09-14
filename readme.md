@@ -19,8 +19,8 @@ Perfect for:
 
 ## prereq
 
-- AWS account credentials setup `.aws/credentials` 
-- `AWS_PROFILE` and `AWS_REGION` environment variables 
+- AWS account credentials setup `.aws/credentials`
+- `AWS_PROFILE` and `AWS_REGION` environment variables
 
 > ✨ Tip `export` default `AWS_PROFILE` and `AWS_REGION` env vars your in `.bashrc` or `.bash_profile` and override as neccessary on the command line or in `package.json` to make working with different stashes easy
 
@@ -92,7 +92,7 @@ node index
 Or in module code itself:
 
 ```javascript
-var keystash = require('keystash')
+const keystash = require('keystash')
 
 keystash.read({ns: 's3-bucket-name'}, console.log)
 ```

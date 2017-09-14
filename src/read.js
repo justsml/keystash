@@ -1,41 +1,39 @@
-var assert = require('@smallwins/validate/assert')
-var aws = require('aws-sdk')
-var write = require('./_write')
-var _decrypt = require('./_decrypt')
+const Promise = require('bluebird')
+const assert = require('@smallwins/validate/assert')
+const aws = require('aws-sdk')
+const write = require('./_write')
+const _decrypt = require('./_decrypt')
 
-module.exports = function read(params, callback) {
-  
-  assert(params, {
+module.exports = function read({ns, version}) {
+  assert({ns}, {
     ns: String,
-  //version: String <-- optional param 
+    //version: String <-- optional param
   })
 
   // query params for the archive
-  var query = {
-    Bucket: params.ns,
+  const query = {
+    Bucket: ns,
     Key: 'archive',
-  } 
-
-  // optional version param
-  if (params.version) {
-    query.VersionId = params.version
   }
 
-  var s3 = new aws.S3
-  s3.getObject(query, function _got(err, result) {
-    if (err) {
-      // if it doesn't exist create an empty obj
-      write({
-        ns: params.ns,
-        payload: {},
-      }, callback)
-    }
-    else {
-      _decrypt({
-        encrypted: result.Body.toString(),
-        cipher: Buffer.from(result.Metadata.cipher, 'base64')
-      }, callback)
-    }
+  // optional version param
+  if (version) {
+    query.VersionId = version
+  }
+
+  const s3 = Promise.promisifyAll(new aws.S3())
+  return s3.getObjectAsync(query)
+  .then(result => {
+    return _decrypt({
+      encrypted: result.Body.toString(),
+      cipher: Buffer.from(result.Metadata.cipher, 'base64')
+    })
+  })
+  .catch(err => {
+    return write({
+      ns,
+      payload: {},
+    })
   })
 }
 
