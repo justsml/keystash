@@ -94,7 +94,9 @@ Or in module code itself:
 ```javascript
 const keystash = require('keystash')
 
-keystash.read({ns: 's3-bucket-name'}, console.log)
+keystash.read({ns: 's3-bucket-name'})
+.then(console.log)
+.catch(console.error)
 ```
 
 See tests for more examples!

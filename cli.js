@@ -210,13 +210,14 @@ function list(ns, title, result) {
   console.log(' ' + head + ' ' + title)
   console.log(chalk.dim('────────────────────────────────────────────────────────────'))
   if (result) {
-    const out = ''
-    Object.keys(result).forEach(key=> {
+    const output = Object.keys(result)
+    .reduce((out, key) => {
       const keyname = pad(chalk.dim(key), 35)
       const value = end(chalk.cyan(result[key]), 35)
       out += `${keyname} ${value}\n`
-    })
-    console.log(out)
+      return out
+    }, '')
+    console.log(output)
   }
   process.exit()
 }
