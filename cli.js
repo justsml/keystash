@@ -1,22 +1,17 @@
 #!/usr/bin/env node
 const chalk = require('chalk')
-const prereq = []
+const prereqFail = p => {
+  console.log(chalk.red('Error!') + ' ' + chalk.yellow('Missing env variables:'))
+  console.log(chalk.dim(' - ') + chalk.cyan(p))
+  process.exit(1)
+}
 
 if (!process.env.AWS_PROFILE) {
-  prereq.push('AWS_PROFILE')
+  prereqFail('AWS_PROFILE')
 }
 
 if (!process.env.AWS_REGION) {
-  prereq.push('AWS_REGION')
-}
-
-const fail = prereq.length != 0
-if (fail) {
-  console.log(chalk.red('Error!') + ' ' + chalk.yellow('Missing env constiables:'))
-  prereq.forEach(p=> {
-    console.log(chalk.dim(' - ') + chalk.cyan(p))
-  })
-  process.exit(1)
+  prereqFail('AWS_REGION')
 }
 
 // prereq check passed; grab deps
